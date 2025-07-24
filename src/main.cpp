@@ -25,10 +25,8 @@ const char *fragmentShaderSource = R"(
     }
 )";
 
-int main(int argc, char *argv[])
-{
-  if (SDL_Init(SDL_INIT_VIDEO) < 0)
-  {
+int main(int argc, char *argv[]) {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
     return -1;
   }
@@ -37,22 +35,21 @@ int main(int argc, char *argv[])
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-  SDL_Window *window = SDL_CreateWindow("OpenGL 4.6 with SDL2 and GLAD", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-  if (!window)
-  {
+  SDL_Window *window = SDL_CreateWindow("OpenGL 4.6 with SDL2 and GLAD", SDL_WINDOWPOS_CENTERED,
+                                        SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
+                                        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+  if (!window) {
     std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
     return -1;
   }
 
   SDL_GLContext glContext = SDL_GL_CreateContext(window);
-  if (!glContext)
-  {
+  if (!glContext) {
     std::cerr << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
     return -1;
   }
 
-  if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-  {
+  if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
     std::cerr << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
@@ -77,11 +74,9 @@ int main(int argc, char *argv[])
   glDeleteShader(fragmentShader);
 
   // Vertex data for a colorful triangle
-  float vertices[] = {
-      // positions         // colors
-      -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-      0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-      0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f};
+  float vertices[] = {// positions         // colors
+                      -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, -0.5f, 0.0f,
+                      0.0f,  1.0f,  0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f,  1.0f};
 
   unsigned int VBO, VAO;
   glGenVertexArrays(1, &VAO);
@@ -100,12 +95,9 @@ int main(int argc, char *argv[])
   bool quit = false;
   SDL_Event e;
 
-  while (!quit)
-  {
-    while (SDL_PollEvent(&e) != 0)
-    {
-      if (e.type == SDL_QUIT)
-      {
+  while (!quit) {
+    while (SDL_PollEvent(&e) != 0) {
+      if (e.type == SDL_QUIT) {
         quit = true;
       }
     }
