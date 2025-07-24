@@ -1,0 +1,37 @@
+#pragma once
+
+#include <vector>
+#include <string>
+#include <glm/glm.hpp>
+#include "graphics/shader.h"
+#include "base_renderer.h"
+
+class CircleRenderer : public BaseRenderer<float> {
+public:
+  CircleRenderer();
+  void add_circle(float x, float y, float radius, glm::vec4 color);
+  void add_circle(float x, float y, float radius, unsigned char r, unsigned char g, unsigned char b,
+                  unsigned char a);
+  
+  size_t get_circle_count() const {
+    return buffer_size / CIRCLE_SIZE;
+  }
+
+  static const size_t VERTICES_PER_CIRCLE = 6;
+  static const size_t FLOATS_PER_VERTEX = 9; // pos(2) + offset(2) + size(1) + color(4)
+  static const size_t ELEMS_PER_CIRCLE = VERTICES_PER_CIRCLE * FLOATS_PER_VERTEX;
+  static const size_t CIRCLE_SIZE = ELEMS_PER_CIRCLE * sizeof(float);
+
+protected:
+  void setup_vertex_attributes() override;
+  void render_impl(size_t count) override;
+  size_t get_element_count() const override { return ELEMS_PER_CIRCLE; }
+  size_t get_bytes_per_element() const override { return CIRCLE_SIZE; }
+  bool uses_base_mesh() const override { return false; }
+  const char* get_renderer_name() const override { return "CircleRenderer"; }
+
+private:
+  const unsigned int MIN_BUFFER_SIZE = 1024;
+
+
+};
