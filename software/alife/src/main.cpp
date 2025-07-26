@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <glad/glad.h>
 #include <iostream>
 
@@ -26,7 +26,7 @@ const char *fragmentShaderSource = R"(
 )";
 
 int main(int argc, char *argv[]) {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+  if (!SDL_Init(SDL_INIT_VIDEO)) {
     std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
     return -1;
   }
@@ -35,9 +35,8 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-  SDL_Window *window = SDL_CreateWindow("OpenGL 4.6 with SDL2 and GLAD", SDL_WINDOWPOS_CENTERED,
-                                        SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
-                                        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+  SDL_Window *window = SDL_CreateWindow("OpenGL 4.6 with SDL3 and GLAD", WINDOW_WIDTH, WINDOW_HEIGHT,
+                                        SDL_WINDOW_OPENGL);
   if (!window) {
     std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
     return -1;
@@ -97,7 +96,7 @@ int main(int argc, char *argv[]) {
 
   while (!quit) {
     while (SDL_PollEvent(&e) != 0) {
-      if (e.type == SDL_QUIT) {
+      if (e.type == SDL_EVENT_QUIT) {
         quit = true;
       }
     }
@@ -116,7 +115,7 @@ int main(int argc, char *argv[]) {
   glDeleteBuffers(1, &VBO);
   glDeleteProgram(shaderProgram);
 
-  SDL_GL_DeleteContext(glContext);
+  SDL_GL_DestroyContext(glContext);
   SDL_DestroyWindow(window);
   SDL_Quit();
 

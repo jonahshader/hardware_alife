@@ -1,6 +1,6 @@
-# cmake_sdl2_opengl
+# hardware_alife
 
-Minimal CMake project with SDL2, OpenGL, GLAD, and some other stuff.
+Artificial life/evolution simulator in hardware (and software).
 
 ## Prerequisites
 

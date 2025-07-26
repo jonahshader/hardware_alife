@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(cmake_sdl2_opengl CXX)
+project(cmake_sdl3_opengl CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,13 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Include FetchContent for downloading dependencies
 include(FetchContent)
 
-# SDL2
+# SDL3
 FetchContent_Declare(
-  SDL2
-  URL https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-2.30.3.tar.gz
-  URL_HASH SHA256=820440072f8f5b50188c1dae104f2ad25984de268785be40c41a099a510f0aec
+  SDL3
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG main
+  GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(SDL2)
+FetchContent_MakeAvailable(SDL3)
 
 # GLAD
 FetchContent_Declare(
@@ -43,7 +44,7 @@ add_executable(prog src/main.cpp)
 
 # Link libraries
 target_link_libraries(prog PRIVATE
-  SDL2::SDL2
+  SDL3::SDL3
   glad
   glm::glm
   OpenMP::OpenMP_CXX
@@ -54,22 +55,20 @@ target_include_directories(prog PRIVATE ${glad_SOURCE_DIR}/include)
 
 # Platform-specific configurations
 if(WIN32)
-  target_link_libraries(prog PRIVATE SDL2::SDL2main)
+  target_link_libraries(prog PRIVATE SDL3::SDL3-shared)
   if(MSVC)
-    # Add win_subsystem:windows to remove console window
+    # Add win_subsystem:console to keep console window for now
     set_target_properties(prog PROPERTIES
-      LINK_FLAGS "/SUBSYSTEM:WINDOWS"
-      LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE"
-      LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:CONSOLE"
+      LINK_FLAGS "/SUBSYSTEM:CONSOLE"
     )
   endif()
 endif()
 
-# Copy SDL2 DLL to output directory on Windows
+# Copy SDL3 DLL to output directory on Windows
 if(WIN32)
   add_custom_command(TARGET prog POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:SDL2::SDL2>
+    $<TARGET_FILE:SDL3::SDL3-shared>
     $<TARGET_FILE_DIR:prog>
   )
 endif()
