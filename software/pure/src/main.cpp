@@ -58,9 +58,11 @@ int main(int argc, char *argv[]) {
   if (!audio_stream) {
     SDL_Log("Failed to open audio: %s", SDL_GetError());
   } else {
-    SDL_Log("Audio stream created successfully");
     SDL_ResumeAudioStreamDevice(audio_stream);  // Make sure audio is playing
   }
+  
+  // Enable VSync for proper frame rate limiting
+  SDL_SetRenderVSync(renderer, 1);
 
   SDL_Texture *texture =
       SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 128, 128);
@@ -88,8 +90,6 @@ int main(int argc, char *argv[]) {
         // Update audio parameters
         audio_data.pan = mouse_x;  // Pan based on X position
         audio_data.frequency = 220.0f + (1.0f - mouse_y) * 660.0f;  // Pitch based on Y (inverted)
-        
-        SDL_Log("Mouse: %.2f, %.2f -> Freq: %.1f, Pan: %.2f", mouse_x, mouse_y, audio_data.frequency, audio_data.pan);
       }
     }
 
