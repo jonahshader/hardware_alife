@@ -1,2 +1,4 @@
 build/
+build_pure/
+build_verilated/
 !.gitignore
