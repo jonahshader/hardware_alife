@@ -1,5 +1,21 @@
 # Pure software implementation
-add_executable(software_pure src/main.cpp)
+add_executable(software_pure
+  src/main.cpp
+  src/audio/audio_command.h
+  src/audio/audio_manager.cpp
+  src/audio/audio_manager.h
+  src/audio/audio_source.h
+  src/audio/event_audio_source.cpp
+  src/audio/event_audio_source.h
+  src/audio/lock_free_ring_buffer.h
+  src/screens/screen.cpp
+  src/screens/screen.h
+  src/screens/screen_context.h
+  src/screens/test_screen.cpp
+  src/screens/test_screen.h
+  src/systems/game.cpp
+  src/systems/game.h
+)
 
 # Link libraries
 target_link_libraries(software_pure PRIVATE
@@ -12,6 +28,9 @@ target_link_libraries(software_pure PRIVATE
 # Include GLAD headers
 target_include_directories(software_pure PRIVATE ${glad_SOURCE_DIR}/include)
 
+# Include project source directories
+target_include_directories(software_pure PRIVATE src)
+
 # Platform-specific configurations
 if(WIN32)
   target_link_libraries(software_pure PRIVATE SDL3::SDL3-shared)
@@ -21,10 +40,8 @@ if(WIN32)
       LINK_FLAGS "/SUBSYSTEM:CONSOLE"
     )
   endif()
-endif()
 
-# Copy SDL3 DLL to output directory on Windows
-if(WIN32)
+  # Copy SDL3 DLL to output directory on Windows
   add_custom_command(TARGET software_pure POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:SDL3::SDL3-shared>
