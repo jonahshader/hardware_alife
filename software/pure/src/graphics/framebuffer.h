@@ -5,10 +5,10 @@
 #include <vector>
 
 struct Pixel {
-  std::uint8_t r;
-  std::uint8_t g;
-  std::uint8_t b;
   std::uint8_t a;
+  std::uint8_t b;
+  std::uint8_t g;
+  std::uint8_t r;
 
   constexpr Pixel() : r(0), g(0), b(0), a(255) {} // default to opaque
   constexpr Pixel(std::uint8_t R, std::uint8_t G, std::uint8_t B, std::uint8_t A = 255)

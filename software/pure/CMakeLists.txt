@@ -8,9 +8,11 @@ add_executable(software_pure
   src/audio/event_audio_source.cpp
   src/audio/event_audio_source.h
   src/audio/lock_free_ring_buffer.h
+  src/screens/screen_context.h
   src/screens/screen.cpp
   src/screens/screen.h
-  src/screens/screen_context.h
+  src/screens/snn_test.cpp
+  src/screens/snn_test.h
   src/screens/test_screen.cpp
   src/screens/test_screen.h
   src/systems/game.cpp
