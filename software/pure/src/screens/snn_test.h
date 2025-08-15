@@ -33,5 +33,5 @@ private:
   // Audio for spike sounds
   std::shared_ptr<CachedAudioSource> cached_audio_source;
 
-  void generate_fourier_input(float mouse_x, float mouse_y, std::array<uint8_t, INPUTS>& input);
+  void generate_fourier_input(float mouse_x, float mouse_y, std::array<int8_t, INPUTS>& input);
 };

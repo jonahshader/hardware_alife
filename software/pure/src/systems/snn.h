@@ -17,8 +17,8 @@ using std::uint8_t;
 }; // namespace
 
 template <int inputs, int hidden, int outputs> struct SNN {
-  array<uint8_t, hidden * inputs> w_hidden_input;
-  array<uint8_t, hidden * hidden> w_hidden_hidden;
+  array<int8_t, hidden * inputs> w_hidden_input;
+  array<int8_t, hidden * hidden> w_hidden_hidden;
   array<int8_t, outputs * hidden> w_output_hidden;
   array<uint8_t, hidden> b_hidden;
   array<uint8_t, hidden> s_hidden;
@@ -29,24 +29,24 @@ template <int inputs, int hidden, int outputs> struct SNN {
 
     // Input->Hidden weights: scale by sqrt(2/fan_in) for ReLU-like activation
     float input_scale = std::sqrt(2.0f / inputs);
-    int input_range = static_cast<int>(32 * input_scale);
+    int input_range = static_cast<int>(64 * input_scale);
     input_range = std::clamp(input_range, 1, 127);
-    std::uniform_int_distribution<int> dist_input(0, input_range);
+    std::uniform_int_distribution<int> dist_input(-input_range, input_range);
 
     // Hidden->Hidden weights: scale by sqrt(1/fan_in) for recurrent connections
     float hidden_scale = std::sqrt(1.0f / hidden);
-    int hidden_range = static_cast<int>(32 * hidden_scale);
+    int hidden_range = static_cast<int>(128 * hidden_scale);
     hidden_range = std::clamp(hidden_range, 1, 127);
-    std::uniform_int_distribution<int> dist_hidden(0, hidden_range);
+    std::uniform_int_distribution<int> dist_hidden(-hidden_range, hidden_range);
 
     // Output weights: Xavier initialization sqrt(1/fan_in) for linear output
     float output_scale = std::sqrt(1.0f / hidden);
-    int output_range = static_cast<int>(64 * output_scale);
+    int output_range = static_cast<int>(128 * output_scale);
     output_range = std::clamp(output_range, 1, 127);
     std::uniform_int_distribution<int> dist_output(-output_range, output_range);
 
     // Bias: small positive values
-    std::uniform_int_distribution<int> dist_bias(0, input_range);
+    std::uniform_int_distribution<int> dist_bias(input_range / 2, input_range);
 
     for (auto &w : w_hidden_input)
       w = static_cast<uint8_t>(dist_input(rng));
@@ -65,22 +65,22 @@ template <int inputs, int hidden, int outputs> struct SNN {
     std::fill(act_hidden.begin(), act_hidden.end(), false);
   }
 
-  void update(std::span<uint8_t const> input) {
+  void update(std::span<int8_t const> input) {
     static constexpr uint8_t LEAK_SHIFT = 3; // leak rate (divide by 8)
     static constexpr int THRESHOLD = std::numeric_limits<uint8_t>::max();
     array<bool, hidden> act_hidden_next;
 
     for (auto i = 0; i < hidden; ++i) {
       // start with current accumulated hidden state
-      uint16_t acc = s_hidden[i];
+      int16_t acc = s_hidden[i];
       // apply leak
-      acc -= acc >> LEAK_SHIFT;
+      acc -= static_cast<uint8_t>(acc) >> LEAK_SHIFT;
       // add bias
       acc += b_hidden[i];
       // add inputs
       for (auto j = 0; j < inputs; ++j) {
-        acc += (static_cast<uint16_t>(w_hidden_input[i * inputs + j]) *
-                    static_cast<uint16_t>(input[j]) >>
+        acc += (static_cast<int16_t>(w_hidden_input[i * inputs + j]) *
+                    static_cast<int16_t>(input[j]) >>
                 8);
       }
 
@@ -98,7 +98,7 @@ template <int inputs, int hidden, int outputs> struct SNN {
 
       // update the state
       s_hidden[i] = static_cast<uint8_t>(acc);
-      if (acc >= THRESHOLD) {
+      if (acc >= THRESHOLD || acc < 0) {
         s_hidden[i] = 0;
       }
     }

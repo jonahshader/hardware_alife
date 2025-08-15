@@ -54,7 +54,7 @@ void SNNTestScreen::update() {
   }
 
   // Generate input from mouse position using Fourier features
-  std::array<uint8_t, INPUTS> input;
+  std::array<int8_t, INPUTS> input;
   generate_fourier_input(mouse.x, mouse.y, input);
 
   // Update the neural network
@@ -73,7 +73,7 @@ void SNNTestScreen::update() {
 }
 
 void SNNTestScreen::generate_fourier_input(float mouse_x, float mouse_y,
-                                           std::array<uint8_t, INPUTS> &input) {
+                                           std::array<int8_t, INPUTS> &input) {
   for (int i = 0; i < INPUTS; ++i) {
     // Generate Fourier features: sin/cos of different frequencies applied to mouse position
     float feature;
@@ -86,77 +86,88 @@ void SNNTestScreen::generate_fourier_input(float mouse_x, float mouse_y,
     }
 
     // Apply some transforms
-    feature = (feature * 0.5f + 0.5f);
     feature *= input_multiplier;
-    feature = std::clamp(feature, 0.0f, 1.0f);
-    input[i] = static_cast<uint8_t>(feature * 255.0f);
+    feature = std::clamp(feature, -1.0f, 1.0f);
+    input[i] = static_cast<int8_t>(feature * 127.0f);
   }
 }
 
 void SNNTestScreen::render(Framebuffer &fb) {
   // Clear background
-  for (int y = 0; y < fb.height(); ++y) {
-    for (int x = 0; x < fb.width(); ++x) {
-      fb.at(x, y) = Pixel(32, 32, 32, 255);
-    }
-  }
+  // for (int y = 0; y < fb.height(); ++y) {
+  //   for (int x = 0; x < fb.width(); ++x) {
+  //     fb.at(x, y) = Pixel(32, 32, 32, 255);
+  //   }
+  // }
 
   // Simple 1x1 pixel visualization, left-aligned
   const auto &mouse = get_mouse_state();
-  std::array<uint8_t, INPUTS> current_input;
+  std::array<int8_t, INPUTS> current_input;
   generate_fourier_input(mouse.x, mouse.y, current_input);
 
-  // Row 1: Input (orange)
+  // Input (orange)
+  int j = 0;
+  static int row = 0;
   for (int i = 0; i < INPUTS && i < fb.width(); ++i) {
-    uint8_t val = current_input[i];
-    fb.at(i, 0) = Pixel(val, val / 2, 0, 255);
+    auto val = current_input[i];
+    if (val >= 0) {
+      fb.at(j, row) = Pixel(val * 2, val, 0, 255);
+    } else {
+      fb.at(j, row) = Pixel(-val, 0, -val * 2, 255);
+    }
+    ++j;
   }
 
-  // Row 2: Hidden state (green)
+  // Hidden state (green)
   for (int i = 0; i < HIDDEN && i < fb.width(); ++i) {
     uint8_t state_val = network.s_hidden[i];
     uint8_t green_intensity = std::max(state_val, (uint8_t)64);
-    fb.at(i, 2) = Pixel(0, green_intensity, green_intensity / 2, 255);
+    fb.at(j, row) = Pixel(0, green_intensity, green_intensity / 2, 255);
+    ++j;
   }
 
-  // Row 3: Hidden activation (red)
+  // Hidden activation (red)
   for (int i = 0; i < HIDDEN && i < fb.width(); ++i) {
     bool is_active = network.act_hidden[i];
     uint8_t intensity = is_active ? 255 : 80;
-    fb.at(i, 4) = Pixel(intensity, 0, 0, 255);
+    fb.at(j, row) = Pixel(intensity, 0, 0, 255);
+    ++j;
   }
 
-  // Row 4: Output (cyan)
+  // Output (cyan)
   std::vector<int16_t> output;
   network.get_output(output);
   for (int i = 0; i < OUTPUTS && i < fb.width(); ++i) {
     int16_t val = output[i];
     uint8_t normalized = static_cast<uint8_t>(std::clamp(val + 128, 0, 255));
-    fb.at(i, 6) = Pixel(0, normalized, normalized / 2, 255);
+    fb.at(j, row) = Pixel(0, normalized, normalized / 2, 255);
+    ++j;
   }
 
-  // Draw mouse crosshair
-  const auto &mouse_state = get_mouse_state();
-  int mouse_pixel_x = (int)(mouse_state.x * fb.width());
-  int mouse_pixel_y = (int)(mouse_state.y * fb.height());
+  row = (row + 1) % fb.height();
 
-  // Horizontal line
-  for (int x = 0; x < fb.width(); ++x) {
-    if (mouse_pixel_y >= 0 && mouse_pixel_y < fb.height()) {
-      Pixel &p = fb.at(x, mouse_pixel_y);
-      p.r = 255 - p.r;
-      p.g = 255 - p.g;
-      p.b = 255 - p.b;
-    }
-  }
+  // // Draw mouse crosshair
+  // const auto &mouse_state = get_mouse_state();
+  // int mouse_pixel_x = (int)(mouse_state.x * fb.width());
+  // int mouse_pixel_y = (int)(mouse_state.y * fb.height());
 
-  // Vertical line
-  for (int y = 0; y < fb.height(); ++y) {
-    if (mouse_pixel_x >= 0 && mouse_pixel_x < fb.width()) {
-      Pixel &p = fb.at(mouse_pixel_x, y);
-      p.r = 255 - p.r;
-      p.g = 255 - p.g;
-      p.b = 255 - p.b;
-    }
-  }
+  // // Horizontal line
+  // for (int x = 0; x < fb.width(); ++x) {
+  //   if (mouse_pixel_y >= 0 && mouse_pixel_y < fb.height()) {
+  //     Pixel &p = fb.at(x, mouse_pixel_y);
+  //     p.r = 255 - p.r;
+  //     p.g = 255 - p.g;
+  //     p.b = 255 - p.b;
+  //   }
+  // }
+
+  // // Vertical line
+  // for (int y = 0; y < fb.height(); ++y) {
+  //   if (mouse_pixel_x >= 0 && mouse_pixel_x < fb.width()) {
+  //     Pixel &p = fb.at(mouse_pixel_x, y);
+  //     p.r = 255 - p.r;
+  //     p.g = 255 - p.g;
+  //     p.b = 255 - p.b;
+  //   }
+  // }
 }
