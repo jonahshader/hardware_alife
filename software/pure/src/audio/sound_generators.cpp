@@ -5,7 +5,7 @@
 
 namespace SoundGenerators {
 
-float generate_click_sample(uint64_t local_sample, float amplitude, float sample_rate) {
+float generate_click_sample(uint64_t local_sample, float amplitude, float sample_rate, std::mt19937* rng) {
   // Simple click: short burst of noise with exponential decay
   const float click_duration_ms = 10.0f;  // 10ms click
   const float click_duration_samples = click_duration_ms * 0.001f * sample_rate;
@@ -15,11 +15,18 @@ float generate_click_sample(uint64_t local_sample, float amplitude, float sample
   }
   
   // Generate noise component
-  static thread_local std::random_device rd;
-  static thread_local std::mt19937 gen(rd());
-  static thread_local std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
-  
-  float noise = noise_dist(gen);
+  float noise;
+  if (rng) {
+    // Use provided generator (for fixed seed)
+    std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
+    noise = noise_dist(*rng);
+  } else {
+    // Use thread_local generator (for random)
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937 gen(rd());
+    static thread_local std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
+    noise = noise_dist(gen);
+  }
   
   // Apply exponential decay envelope
   float t = static_cast<float>(local_sample) / click_duration_samples;
@@ -28,7 +35,7 @@ float generate_click_sample(uint64_t local_sample, float amplitude, float sample
   return noise * envelope * amplitude;
 }
 
-float generate_beep_sample(uint64_t local_sample, float amplitude, float sample_rate) {
+float generate_beep_sample(uint64_t local_sample, float amplitude, float sample_rate, std::mt19937* rng) {
   // Simple beep: sine wave with envelope
   const float beep_duration_ms = 100.0f;  // 100ms beep
   const float beep_duration_samples = beep_duration_ms * 0.001f * sample_rate;
@@ -55,7 +62,7 @@ float generate_beep_sample(uint64_t local_sample, float amplitude, float sample_
   return sine * envelope * amplitude;
 }
 
-float generate_explosion_sample(uint64_t local_sample, float amplitude, float sample_rate) {
+float generate_explosion_sample(uint64_t local_sample, float amplitude, float sample_rate, std::mt19937* rng) {
   // Explosion: low-frequency rumble with long decay
   const float explosion_duration_ms = 500.0f;  // 500ms explosion
   const float explosion_duration_samples = explosion_duration_ms * 0.001f * sample_rate;
@@ -64,14 +71,22 @@ float generate_explosion_sample(uint64_t local_sample, float amplitude, float sa
     return 0.0f;  // Explosion finished
   }
   
-  static thread_local std::random_device rd;
-  static thread_local std::mt19937 gen(rd());
-  static thread_local std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
-  
   // Mix of low-frequency sine and noise
   float t = static_cast<float>(local_sample) / sample_rate;
   float low_freq = std::sin(2.0f * std::numbers::pi_v<float> * 60.0f * t);  // 60Hz rumble
-  float noise = noise_dist(gen);
+  
+  float noise;
+  if (rng) {
+    // Use provided generator (for fixed seed)
+    std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
+    noise = noise_dist(*rng);
+  } else {
+    // Use thread_local generator (for random)
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937 gen(rd());
+    static thread_local std::uniform_real_distribution<float> noise_dist(-1.0f, 1.0f);
+    noise = noise_dist(gen);
+  }
   float mixed = 0.7f * low_freq + 0.3f * noise;
   
   // Long exponential decay
@@ -93,14 +108,14 @@ uint64_t get_sound_duration_samples(SoundType type, float sample_rate) {
   return 0;
 }
 
-float generate_sample(SoundType type, uint64_t local_sample, float amplitude, float sample_rate) {
+float generate_sample(SoundType type, uint64_t local_sample, float amplitude, float sample_rate, std::mt19937* rng) {
   switch (type) {
     case SoundType::CLICK:
-      return generate_click_sample(local_sample, amplitude, sample_rate);
+      return generate_click_sample(local_sample, amplitude, sample_rate, rng);
     case SoundType::BEEP:
-      return generate_beep_sample(local_sample, amplitude, sample_rate);
+      return generate_beep_sample(local_sample, amplitude, sample_rate, rng);
     case SoundType::EXPLOSION:
-      return generate_explosion_sample(local_sample, amplitude, sample_rate);
+      return generate_explosion_sample(local_sample, amplitude, sample_rate, rng);
   }
   return 0.0f;
 }
