@@ -5,6 +5,9 @@
 EventAudioSource::EventAudioSource() = default;
 
 void EventAudioSource::generate_samples(float* left_buffer, float* right_buffer, int sample_count) {
+  // Record precise time at start of callback for interpolation
+  last_callback_time_.store(std::chrono::high_resolution_clock::now(), std::memory_order_relaxed);
+  
   uint64_t buffer_start = sample_position_.load(std::memory_order_relaxed);
   
   for (int i = 0; i < sample_count; ++i) {
@@ -65,9 +68,20 @@ void EventAudioSource::trigger_explosion(float amplitude, float jitter_ms, float
 }
 
 void EventAudioSource::trigger_event(EventType type, float amplitude, float jitter_ms, float pan) {
-  static thread_local std::random_device rd;
-  static thread_local std::mt19937 gen(rd());
-  static thread_local std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+  // Get current high-precision time
+  auto now = std::chrono::high_resolution_clock::now();
+  auto last_callback = last_callback_time_.load(std::memory_order_relaxed);
+  
+  // Calculate elapsed time since last audio callback (avoiding double)
+  auto elapsed_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now - last_callback);
+  
+  // Convert nanoseconds to samples: samples = nanos * sample_rate / 1e9
+  // Rearrange to avoid floating point: samples = (nanos * sample_rate) / 1000000000
+  uint64_t elapsed_samples = (elapsed_nanos.count() * static_cast<uint64_t>(SAMPLE_RATE)) / 1000000000ULL;
+  
+  // Interpolated current position
+  uint64_t base_sample = sample_position_.load(std::memory_order_relaxed);
+  uint64_t interpolated_sample = base_sample + elapsed_samples;
   
   SoundInstance sound;
   sound.type = type;
@@ -76,12 +90,13 @@ void EventAudioSource::trigger_event(EventType type, float amplitude, float jitt
   sound.finished = false;
   
   // Apply jitter: convert ms to samples and add random offset
-  double jitter_samples = jitter_ms * 0.001 * SAMPLE_RATE * dist(gen);
-  uint64_t current_pos = sample_position_.load(std::memory_order_relaxed);
+  static thread_local std::random_device rd;
+  static thread_local std::mt19937 gen(rd());
+  static thread_local std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
   
-  // Ensure we don't trigger in the past
-  int64_t target_sample = current_pos + static_cast<int64_t>(jitter_samples);
-  sound.start_sample = std::max(target_sample, static_cast<int64_t>(current_pos));
+  uint64_t jitter_samples = static_cast<uint64_t>(jitter_ms * 0.001f * SAMPLE_RATE * std::abs(dist(gen)));
+  
+  sound.start_sample = interpolated_sample + jitter_samples;
   
   active_sounds_.try_push(sound);
 }

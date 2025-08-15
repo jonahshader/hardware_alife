@@ -1,6 +1,6 @@
-#include "systems/game.h"
-#include "screens/test_screen.h"
 #include "screens/snn_test.h"
+#include "screens/test_screen.h"
+#include "systems/game.h"
 #include <memory>
 
 int main(int argc, char *argv[]) {
@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
   // Create and add test screen
   auto test_screen = std::make_unique<SNNTestScreen>(game);
   game.push_screen(std::move(test_screen));
+  game.set_vsync(false);
 
   // Run the game
   game.run();

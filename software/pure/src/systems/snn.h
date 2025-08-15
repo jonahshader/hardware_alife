@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <iostream>
@@ -66,7 +67,7 @@ template <int inputs, int hidden, int outputs> struct SNN {
   }
 
   void update(std::span<int8_t const> input) {
-    static constexpr uint8_t LEAK_SHIFT = 3; // leak rate (divide by 8)
+    static constexpr uint8_t LEAK_SHIFT = 4; // leak rate
     static constexpr int THRESHOLD = std::numeric_limits<uint8_t>::max();
     array<bool, hidden> act_hidden_next;
 
@@ -101,6 +102,9 @@ template <int inputs, int hidden, int outputs> struct SNN {
       if (acc >= THRESHOLD || acc < 0) {
         s_hidden[i] = 0;
       }
+      // if (acc < 0) {
+      //   s_hidden[i] = 0;
+      // }
     }
     // copy over new activations
     act_hidden = act_hidden_next;
@@ -108,7 +112,7 @@ template <int inputs, int hidden, int outputs> struct SNN {
     // for (auto i = 0; i < hidden; ++i) {
     //   std::cout << (int)s_hidden[i] << " ";
     // }
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
 
   void get_output(std::vector<int16_t> &output) {

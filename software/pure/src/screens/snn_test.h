@@ -19,7 +19,7 @@ public:
 
 private:
   static constexpr int INPUTS = 16;
-  static constexpr int HIDDEN = 32;
+  static constexpr int HIDDEN = 48;
   static constexpr int OUTPUTS = 8;
 
   SNN<INPUTS, HIDDEN, OUTPUTS> network;

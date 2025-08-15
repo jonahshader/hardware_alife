@@ -66,7 +66,7 @@ void SNNTestScreen::update() {
       if (network.act_hidden[i]) {
         // Map neuron index to pan: -1.0 (left) to 1.0 (right)
         float pan = (static_cast<float>(i) / (HIDDEN - 1)) * 2.0f - 1.0f;
-        cached_audio_source->trigger_click(0.1f, 10.0f, pan);
+        cached_audio_source->trigger_click(0.1f, 0.0f, pan);
       }
     }
   }

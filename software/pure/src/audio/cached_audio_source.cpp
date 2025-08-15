@@ -11,6 +11,9 @@ CachedAudioSource::CachedAudioSource() {
 
 void CachedAudioSource::generate_samples(float *left_buffer, float *right_buffer,
                                          int sample_count) {
+  // Record precise time at start of callback for interpolation
+  last_callback_time_.store(std::chrono::high_resolution_clock::now(), std::memory_order_relaxed);
+  
   uint64_t buffer_start = sample_position_.load(std::memory_order_relaxed);
 
   for (int i = 0; i < sample_count; ++i) {
@@ -80,7 +83,20 @@ void CachedAudioSource::trigger_explosion(float amplitude, float jitter_ms, floa
 
 void CachedAudioSource::trigger_sound(SoundGenerators::SoundType type, float amplitude,
                                       float jitter_ms, float pan) {
-  uint64_t current_sample = sample_position_.load(std::memory_order_relaxed);
+  // Get current high-precision time
+  auto now = std::chrono::high_resolution_clock::now();
+  auto last_callback = last_callback_time_.load(std::memory_order_relaxed);
+  
+  // Calculate elapsed time since last audio callback (avoiding double)
+  auto elapsed_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now - last_callback);
+  
+  // Convert nanoseconds to samples: samples = nanos * sample_rate / 1e9
+  // Rearrange to avoid floating point: samples = (nanos * sample_rate) / 1000000000
+  uint64_t elapsed_samples = (elapsed_nanos.count() * static_cast<uint64_t>(SAMPLE_RATE)) / 1000000000ULL;
+  
+  // Interpolated current position
+  uint64_t base_sample = sample_position_.load(std::memory_order_relaxed);
+  uint64_t interpolated_sample = base_sample + elapsed_samples;
 
   // Apply jitter if specified
   uint64_t jitter_samples = 0;
@@ -92,7 +108,7 @@ void CachedAudioSource::trigger_sound(SoundGenerators::SoundType type, float amp
   }
 
   PlaybackInstance sound;
-  sound.start_sample = current_sample + jitter_samples;
+  sound.start_sample = interpolated_sample + jitter_samples;
   sound.type = type;
   sound.amplitude = amplitude;
   sound.pan = pan;

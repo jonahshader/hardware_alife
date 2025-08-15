@@ -4,6 +4,7 @@
 #include "lock_free_ring_buffer.h"
 #include "sound_generators.h"
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 
 enum class EventType {
@@ -49,6 +50,7 @@ private:
   
   LockFreeRingBuffer<SoundInstance, 1024> active_sounds_;
   std::atomic<uint64_t> sample_position_{0};
+  std::atomic<std::chrono::high_resolution_clock::time_point> last_callback_time_;
   
   static constexpr float SAMPLE_RATE = 44100.0f;
 };
