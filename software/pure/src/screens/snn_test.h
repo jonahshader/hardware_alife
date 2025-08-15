@@ -2,7 +2,7 @@
 
 #include "screen.h"
 #include "../systems/snn.h"
-#include "audio/event_audio_source.h"
+#include "audio/cached_audio_source.h"
 #include <array>
 #include <memory>
 #include <random>
@@ -31,7 +31,7 @@ private:
   float input_multiplier = 1.0f;
 
   // Audio for spike sounds
-  std::shared_ptr<EventAudioSource> event_audio_source;
+  std::shared_ptr<CachedAudioSource> cached_audio_source;
 
   void generate_fourier_input(float mouse_x, float mouse_y, std::array<uint8_t, INPUTS>& input);
 };

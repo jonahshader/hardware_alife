@@ -16,7 +16,7 @@ SNNTestScreen::SNNTestScreen(ScreenContext &ctx) : Screen(ctx), rng(std::random_
   network.init(rng);
 
   // Initialize audio source
-  event_audio_source = std::make_shared<EventAudioSource>();
+  cached_audio_source = std::make_shared<CachedAudioSource>();
 }
 
 SNNTestScreen::~SNNTestScreen() = default;
@@ -26,8 +26,8 @@ void SNNTestScreen::show() {
   network.clear();
 
   // Add audio source when screen becomes active
-  if (event_audio_source) {
-    AudioManager::instance().add_source(event_audio_source.get());
+  if (cached_audio_source) {
+    AudioManager::instance().add_source(cached_audio_source.get());
   }
 }
 
@@ -35,8 +35,8 @@ void SNNTestScreen::hide() {
   Screen::hide();
 
   // Remove audio source when screen becomes inactive
-  if (event_audio_source) {
-    AudioManager::instance().remove_source(event_audio_source.get());
+  if (cached_audio_source) {
+    AudioManager::instance().remove_source(cached_audio_source.get());
   }
 }
 
@@ -60,9 +60,15 @@ void SNNTestScreen::update() {
   // Update the neural network
   network.update(input);
 
-  // Trigger audio for first neuron only
-  if (event_audio_source && network.act_hidden[0]) {
-    event_audio_source->trigger_click(0.3f, 5.0f);
+  // Trigger audio for all neurons with panning
+  if (cached_audio_source) {
+    for (int i = 0; i < HIDDEN; ++i) {
+      if (network.act_hidden[i]) {
+        // Map neuron index to pan: -1.0 (left) to 1.0 (right)
+        float pan = (static_cast<float>(i) / (HIDDEN - 1)) * 2.0f - 1.0f;
+        cached_audio_source->trigger_click(0.1f, 10.0f, pan);
+      }
+    }
   }
 }
 
@@ -106,11 +112,11 @@ void SNNTestScreen::render(Framebuffer &fb) {
     fb.at(i, 0) = Pixel(val, val / 2, 0, 255);
   }
 
-  // Row 2: Hidden state (green) 
+  // Row 2: Hidden state (green)
   for (int i = 0; i < HIDDEN && i < fb.width(); ++i) {
     uint8_t state_val = network.s_hidden[i];
     uint8_t green_intensity = std::max(state_val, (uint8_t)64);
-    fb.at(i, 2) = Pixel(0, green_intensity, green_intensity/2, 255);
+    fb.at(i, 2) = Pixel(0, green_intensity, green_intensity / 2, 255);
   }
 
   // Row 3: Hidden activation (red)

@@ -5,9 +5,13 @@ add_executable(software_pure
   src/audio/audio_manager.cpp
   src/audio/audio_manager.h
   src/audio/audio_source.h
+  src/audio/cached_audio_source.cpp
+  src/audio/cached_audio_source.h
   src/audio/event_audio_source.cpp
   src/audio/event_audio_source.h
   src/audio/lock_free_ring_buffer.h
+  src/audio/sound_generators.cpp
+  src/audio/sound_generators.h
   src/screens/screen_context.h
   src/screens/screen.cpp
   src/screens/screen.h
