@@ -25,3 +25,5 @@ SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
 # Sort includes
 SortIncludes: true
+# Always break template declarations
+AlwaysBreakTemplateDeclarations: Yes

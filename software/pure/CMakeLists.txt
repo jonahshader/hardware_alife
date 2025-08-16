@@ -21,6 +21,12 @@ add_executable(software_pure
   src/screens/test_screen.h
   src/systems/game.cpp
   src/systems/game.h
+  src/systems/fp/fp.h
+  src/systems/fp/fp_core.h
+  src/systems/fp/fp_math.h
+  src/systems/fp/fp_io.h
+  src/systems/fp/fp_literals.h
+  src/systems/fp/fp_types.h
 )
 
 # Link libraries

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Build options
 option(BUILD_SOFTWARE_PURE "Build pure software implementation" ON)
 option(BUILD_SOFTWARE_VERILATED "Build verilated software implementation" OFF)
+option(BUILD_TESTS "Build tests" ON)
 
 # Include FetchContent for downloading dependencies
 include(FetchContent)
@@ -40,6 +41,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
+# GoogleTest
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG v1.14.0
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 # Find OpenMP
 find_package(OpenMP REQUIRED)
 
@@ -55,4 +66,10 @@ endif()
 # Always build common directory if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/common/CMakeLists.txt")
     add_subdirectory(common)
+endif()
+
+# Add tests if enabled
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(software/tests)
 endif()
