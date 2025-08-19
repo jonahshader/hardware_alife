@@ -34,6 +34,18 @@ public:
     return fb.at(y * m_width + x);
   }
 
+  void set_safe(int x, int y, const Pixel &px) {
+    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
+      fb.at(y * m_width + x) = px;
+    }
+  }
+
+  void get_safe(int x, int y, Pixel &px) const {
+    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
+      px = fb.at(y * m_width + x);
+    }
+  }
+
   const Pixel &at(int x, int y) const {
     return fb.at(y * m_width + x);
   }

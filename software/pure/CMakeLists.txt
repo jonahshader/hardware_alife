@@ -28,11 +28,15 @@ target_link_libraries(software_pure PRIVATE
   SDL3::SDL3
   glad
   glm::glm
+  Eigen3::Eigen
   OpenMP::OpenMP_CXX
 )
 
 # Include GLAD headers
 target_include_directories(software_pure PRIVATE ${glad_SOURCE_DIR}/include)
+
+# Include CNL headers
+target_include_directories(software_pure PRIVATE ${cnl_SOURCE_DIR}/include)
 
 # Include project source directories
 target_include_directories(software_pure PRIVATE src)

@@ -40,6 +40,28 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
+# CNL (Compositional Numeric Library)
+FetchContent_Declare(
+  cnl
+  GIT_REPOSITORY https://github.com/johnmcfarlane/cnl.git
+  GIT_TAG main
+)
+
+# Disable CNL tests and benchmarks to speed up build
+set(CNL_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(CNL_ENABLE_BENCHMARKS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(cnl)
+
+# Eigen
+FetchContent_Declare(
+  Eigen3
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+  GIT_TAG 3.4.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(Eigen3)
+
 # Find OpenMP
 find_package(OpenMP REQUIRED)
 

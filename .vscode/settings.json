@@ -78,6 +78,12 @@
     "xstring": "cpp",
     "xtr1common": "cpp",
     "xtree": "cpp",
-    "xutility": "cpp"
+    "xutility": "cpp",
+    "any": "cpp",
+    "cinttypes": "cpp",
+    "filesystem": "cpp",
+    "numeric": "cpp",
+    "set": "cpp",
+    "variant": "cpp"
   }
 }
