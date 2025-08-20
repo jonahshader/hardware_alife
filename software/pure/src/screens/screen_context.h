@@ -11,6 +11,7 @@ public:
 
   virtual std::pair<int, int> get_framebuffer_size() const = 0;
   virtual void set_vsync(bool enabled) = 0;
+  virtual void set_framerate_limit(float fps) = 0;
   virtual void set_fullscreen(bool enabled) = 0;
   virtual void stop() = 0;
 

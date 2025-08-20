@@ -1,15 +1,16 @@
 #pragma once
 
-#include "screen.h"
 #include "../systems/snn.h"
 #include "audio/cached_audio_source.h"
+#include "screen.h"
 #include <array>
 #include <memory>
 #include <random>
 
+
 class SNNTestScreen : public Screen {
 public:
-  SNNTestScreen(ScreenContext& ctx);
+  SNNTestScreen(ScreenContext &ctx);
   ~SNNTestScreen() override;
 
   void show() override;
@@ -19,7 +20,7 @@ public:
 
 private:
   static constexpr int INPUTS = 16;
-  static constexpr int HIDDEN = 48;
+  static constexpr int HIDDEN = 32;
   static constexpr int OUTPUTS = 8;
 
   SNN<INPUTS, HIDDEN, OUTPUTS> network;
@@ -33,5 +34,5 @@ private:
   // Audio for spike sounds
   std::shared_ptr<CachedAudioSource> cached_audio_source;
 
-  void generate_fourier_input(float mouse_x, float mouse_y, std::array<int8_t, INPUTS>& input);
+  void generate_fourier_input(float mouse_x, float mouse_y, std::array<int8_t, INPUTS> &input);
 };

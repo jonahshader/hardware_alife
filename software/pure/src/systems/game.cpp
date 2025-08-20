@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <vector>
 
 Game::Game(int internal_width, int internal_height, const std::string &title)
@@ -43,6 +44,9 @@ Game::~Game() {
 
 void Game::run() {
   SDL_Event e;
+  Uint64 last_frame_time = SDL_GetTicks();
+  fps_timer = SDL_GetTicks();
+  frame_count = 0;
   while (running) {
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_EVENT_QUIT) {
@@ -82,6 +86,27 @@ void Game::run() {
 
     SDL_RenderTexture(renderer, frame, nullptr, &dst);
     SDL_RenderPresent(renderer);
+
+    // FPS tracking
+    frame_count++;
+    Uint64 current_time = SDL_GetTicks();
+    if (current_time - fps_timer >= 1000) { // 1 second elapsed
+      float avg_fps = frame_count * 1000.0f / (current_time - fps_timer);
+      printf("Average FPS: %.1f\n", avg_fps);
+      frame_count = 0;
+      fps_timer = current_time;
+    }
+
+    // Apply framerate limiting when vsync is disabled
+    if (!vsync && framerate_limit > 0.0f) {
+      float target_frame_time = 1000.0f / framerate_limit; // milliseconds per frame
+      float elapsed = (float)(current_time - last_frame_time);
+
+      if (elapsed < target_frame_time) {
+        SDL_Delay((Uint32)(target_frame_time - elapsed));
+      }
+    }
+    last_frame_time = SDL_GetTicks();
   }
 }
 
@@ -133,6 +158,10 @@ void Game::handle_input(const SDL_Event &event) {
 void Game::set_vsync(bool enabled) {
   vsync = enabled;
   SDL_SetRenderVSync(renderer, vsync ? 1 : 0);
+}
+
+void Game::set_framerate_limit(float fps) {
+  framerate_limit = fps;
 }
 
 void Game::set_fullscreen(bool enabled) {

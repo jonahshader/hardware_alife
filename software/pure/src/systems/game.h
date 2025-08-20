@@ -23,6 +23,7 @@ public:
   // ScreenContext interface
   std::pair<int, int> get_framebuffer_size() const override;
   void set_vsync(bool enabled) override;
+  void set_framerate_limit(float fps) override;
   void set_fullscreen(bool enabled) override;
   void stop() override;
   void push_screen(std::unique_ptr<Screen> screen) override;
@@ -40,6 +41,11 @@ private:
   bool running{true};
   bool vsync{true};
   bool fullscreen{false};
+  float framerate_limit{0.0f}; // 0 = no limit
+  
+  // FPS tracking
+  int frame_count{0};
+  Uint64 fps_timer{0};
 
   void resize();
 };

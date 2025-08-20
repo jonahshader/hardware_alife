@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
   auto test_screen = std::make_unique<SNNTestScreen>(game);
   game.push_screen(std::move(test_screen));
   game.set_vsync(false);
+  // game.set_framerate_limit(600.0f);
 
   // Run the game
   game.run();
