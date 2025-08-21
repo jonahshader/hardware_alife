@@ -8,30 +8,12 @@ namespace gpu {
 
 int render(const Rect &instr, Framebuffer &fb);
 int render(const Circle &instr, Framebuffer &fb);
-int render_line(const Instruction &instr, Framebuffer &fb);
-int render_sprite(const Instruction &instr, Framebuffer &fb);
-int render_tile(const Instruction &instr, Framebuffer &fb);
+int render(const Line &instr, Framebuffer &fb);
 
-void render(const Instruction &instr, Framebuffer &fb) {
-  switch (instr.renderer) {
-    case RECT:
-      render_rect(instr, fb);
-      break;
-    case CIRCLE:
-      render_circle(instr, fb);
-      break;
-    case LINE:
-      render_line(instr, fb);
-      break;
-    case SPRITE:
-      render_sprite(instr, fb);
-      break;
-    case TILE:
-      render_tile(instr, fb);
-      break;
-    default:
-      throw std::runtime_error("Unknown renderer");
-  }
+int render(const Instruction &instr, Framebuffer &fb) {
+  return std::visit([&fb](const auto& instruction) -> int {
+    return render(instruction, fb);
+  }, instr);
 }
 
 // OpenGL-style alpha blending: GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
@@ -56,14 +38,14 @@ Pixel alpha_blend(const Pixel &source, const Pixel &dest) {
 int render(const Rect &instr, Framebuffer &fb) {
   // optimization: if source is fully transparent, no need to render
   if (instr.color.a == 0)
-    return;
+    return 0;
 
   // clamp rectangle bounds to framebuffer
-  auto x_start = std::max(instr.pos[0], static_cast<std::int16_t>(0));
-  auto x_end = std::min(instr.pos[0] + static_cast<std::int16_t>(instr.size[0]),
+  auto x_start = std::max(instr.pos[0], std::int16_t{0});
+  auto x_end = std::min(static_cast<std::int16_t>(instr.pos[0] + instr.size[0]),
                         static_cast<std::int16_t>(fb.width()));
-  auto y_start = std::max(instr.pos[1], static_cast<std::int16_t>(0));
-  auto y_end = std::min(instr.pos[1] + static_cast<std::int16_t>(instr.size[1]),
+  auto y_start = std::max(instr.pos[1], std::int16_t{0});
+  auto y_end = std::min(static_cast<std::int16_t>(instr.pos[1] + instr.size[1]),
                         static_cast<std::int16_t>(fb.height()));
 
   // optimization: if source is fully opaque, we can skip blending
@@ -83,6 +65,8 @@ int render(const Rect &instr, Framebuffer &fb) {
       }
     }
   }
+
+  return 0;
 }
 
 int render(const Circle &instr, Framebuffer &fb) {
@@ -92,13 +76,13 @@ int render(const Circle &instr, Framebuffer &fb) {
   // same thing here in C++.
   // optimization: if source is fully transparent, no need to render
   if (instr.color.a == 0)
-    return;
+    return 0; // TODO
 
   // clamp rectangle bounds to framebuffer
-  auto x_start = std::max(instr.pos[0] - instr.radius, static_cast<std::int16_t>(0));
-  auto x_end = std::min(instr.pos[0] + instr.radius, static_cast<std::int16_t>(fb.width()));
-  auto y_start = std::max(instr.pos[1] - instr.radius, static_cast<std::int16_t>(0));
-  auto y_end = std::min(instr.pos[1] + instr.radius, static_cast<std::int16_t>(fb.height()));
+  auto x_start = std::max(static_cast<std::int16_t>(instr.pos[0] - instr.radius), std::int16_t{0});
+  auto x_end = std::min(static_cast<std::int16_t>(instr.pos[0] + instr.radius + 1), static_cast<std::int16_t>(fb.width()));
+  auto y_start = std::max(static_cast<std::int16_t>(instr.pos[1] - instr.radius), std::int16_t{0});
+  auto y_end = std::min(static_cast<std::int16_t>(instr.pos[1] + instr.radius + 1), static_cast<std::int16_t>(fb.height()));
   std::uint32_t r2 = instr.radius * instr.radius;
 
   // optimization: if source is fully opaque, we can skip blending
@@ -126,6 +110,8 @@ int render(const Circle &instr, Framebuffer &fb) {
       }
     }
   }
+
+  return 0; // TODO
 }
 
 int render(const Line &instr, Framebuffer &fb) {

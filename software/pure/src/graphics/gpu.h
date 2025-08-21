@@ -3,13 +3,14 @@
 #include <Eigen/Dense>
 #include <cnl/all.h>
 #include <cstdint>
+#include <variant>
 
 #include "framebuffer.h"
 
 namespace {
 using Eigen::Vector2;
 using Eigen::Vector3;
-std::uint16_t;
+using std::uint16_t;
 }; // namespace
 
 namespace gpu {
@@ -41,10 +42,10 @@ struct Line {
   Vector2<int16_t> start;
   Vector2<int16_t> end;
   Pixel color;
-}
+};
 
 using Instruction = std::variant<Rect, Circle, Line>;
 
 int render(const Instruction &instr, Framebuffer &fb);
 
-}; // namespace GPU
+}; // namespace gpu

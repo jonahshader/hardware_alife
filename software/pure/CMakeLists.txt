@@ -12,6 +12,11 @@ add_executable(software_pure
   src/audio/lock_free_ring_buffer.h
   src/audio/sound_generators.cpp
   src/audio/sound_generators.h
+  src/graphics/framebuffer.h
+  src/graphics/gpu.cpp
+  src/graphics/gpu.h
+  src/screens/gpu_test.cpp
+  src/screens/gpu_test.h
   src/screens/screen_context.h
   src/screens/screen.cpp
   src/screens/screen.h

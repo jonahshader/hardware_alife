@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../systems/snn.h"
+#include "systems/snn.h"
 #include "audio/cached_audio_source.h"
 #include "screen.h"
 #include <array>

@@ -1,3 +1,4 @@
+#include "screens/gpu_test.h"
 #include "screens/snn_test.h"
 #include "screens/test_screen.h"
 #include "systems/game.h"
@@ -8,10 +9,10 @@ int main(int argc, char *argv[]) {
   Game game(128, 128, "Hardware ALife Test");
 
   // Create and add test screen
-  auto test_screen = std::make_unique<SNNTestScreen>(game);
+  auto test_screen = std::make_unique<GPUTestScreen>(game);
   game.push_screen(std::move(test_screen));
   game.set_vsync(false);
-  // game.set_framerate_limit(600.0f);
+  game.set_framerate_limit(600.0f);
 
   // Run the game
   game.run();
