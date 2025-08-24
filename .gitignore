@@ -1,4 +1,16 @@
 build/
 build_pure/
 build_verilated/
+
+# GHDL generated files
+hardware/ghdl_work/
+*.cf
+e~*.o
+
+# Generated Verilog from GHDL synthesis
+hardware/generated/
+
+# Verilator generated files
+hardware/verilated/obj_dir/
+
 !.gitignore

@@ -62,8 +62,78 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Eigen3)
 
+# GTest
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG v1.14.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(googletest)
+
 # Find OpenMP
 find_package(OpenMP REQUIRED)
+
+# VHDL to Verilator pipeline functions
+function(add_vhdl_module MODULE_NAME)
+    set(options "")
+    set(oneValueArgs "TOP_ENTITY")
+    set(multiValueArgs "VHDL_FILES")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    
+    # Set top entity name (default to module name)
+    if(NOT ARG_TOP_ENTITY)
+        set(ARG_TOP_ENTITY ${MODULE_NAME})
+    endif()
+    
+    # Convert relative paths to absolute paths
+    set(VHDL_ABS_FILES "")
+    foreach(FILE ${ARG_VHDL_FILES})
+        get_filename_component(ABS_FILE "${CMAKE_SOURCE_DIR}/hardware/vhdl/${FILE}" ABSOLUTE)
+        list(APPEND VHDL_ABS_FILES ${ABS_FILE})
+    endforeach()
+    
+    # Output paths
+    set(VERILOG_FILE ${CMAKE_BINARY_DIR}/hardware/generated/verilog/${MODULE_NAME}.v)
+    set(VERILATED_DIR ${CMAKE_BINARY_DIR}/hardware/verilated/obj_dir/${MODULE_NAME})
+    set(VERILATED_MAKEFILE ${VERILATED_DIR}/V${ARG_TOP_ENTITY}.mk)
+    set(VERILATED_LIB ${VERILATED_DIR}/V${ARG_TOP_ENTITY}__ALL.a)
+    
+    # Create directories
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/hardware/generated/verilog)
+    file(MAKE_DIRECTORY ${VERILATED_DIR})
+    
+    # GHDL work directory
+    set(GHDL_WORKDIR ${CMAKE_BINARY_DIR}/hardware/ghdl_work/${MODULE_NAME})
+    file(MAKE_DIRECTORY ${GHDL_WORKDIR})
+    
+    # Step 1a: GHDL analyze phase
+    add_custom_command(
+        OUTPUT ${GHDL_WORKDIR}/.analyzed
+        COMMAND ghdl -i --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} ${ARG_VHDL_FILES}
+        COMMAND ghdl -m --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} ${ARG_TOP_ENTITY}
+        COMMAND ${CMAKE_COMMAND} -E touch ${GHDL_WORKDIR}/.analyzed
+        DEPENDS ${VHDL_ABS_FILES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/hardware/vhdl
+        COMMENT "Analyzing VHDL files for: ${MODULE_NAME}"
+        VERBATIM
+    )
+    
+    # Step 1b: GHDL synthesis to Verilog
+    add_custom_command(
+        OUTPUT ${VERILOG_FILE}
+        COMMAND ghdl synth --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} --out=verilog ${ARG_TOP_ENTITY} > ${VERILOG_FILE}
+        DEPENDS ${GHDL_WORKDIR}/.analyzed
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/hardware/vhdl
+        COMMENT "Synthesizing VHDL to Verilog: ${MODULE_NAME}"
+        VERBATIM
+    )
+    
+    # The Verilator step is now handled by verilate() function
+    # Create a target for this module  
+    add_custom_target(${MODULE_NAME}_verilog DEPENDS ${VERILOG_FILE})
+    
+endfunction()
 
 # Add subdirectories based on build options
 if(BUILD_SOFTWARE_PURE)

@@ -1,3 +1,5 @@
+-- a frame buffer with three ports: one read for display, one read for gpu, one write for gpu.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -46,7 +48,7 @@ architecture rtl of rw_fb is
   function get_fb_addr(pos : fb_vec_t; reading : boolean; current_buffer : boolean) return fb_addr_t is
     variable addr : fb_addr_t := (others => '0');
   begin
-    addr := pos.x + pos.y * WIDTH;
+    addr := resize(unsigned(pos.x), addr'length) + resize(unsigned(pos.y) * to_unsigned(WIDTH, 8), addr'length);
     if reading = current_buffer then
       addr := addr + to_unsigned(FB_PIXELS, addr'length);
     end if;
@@ -59,10 +61,13 @@ begin
   gpu_read_val  <= gpu_read_delay(0);
 
   gpu_proc : process (all) is
-    variable read_addr  : fb_addr_t := get_fb_addr(gpu_read_pos, gpu_reading, true);
-    variable write_addr : fb_addr_t := get_fb_addr(gpu_write_pos, gpu_reading, true);
+    variable read_addr  : fb_addr_t;
+    variable write_addr : fb_addr_t;
   begin
     if rising_edge(gpu_clk) then
+      -- Calculate addresses inside the process
+      read_addr := get_fb_addr(gpu_read_pos, gpu_reading, true);
+      write_addr := get_fb_addr(gpu_write_pos, gpu_reading, true);
       -- toggle reading flag
       if swap then
         gpu_reading <= not gpu_reading;
@@ -83,9 +88,11 @@ begin
   end process;
 
   disp_proc : process (all) is
-    variable read_addr : fb_addr_t := get_fb_addr(disp_read_pos, gpu_reading, false);
+    variable read_addr : fb_addr_t;
   begin
     if rising_edge(disp_clk) then
+      -- Calculate address inside the process
+      read_addr := get_fb_addr(disp_read_pos, disp_reading, false);
       -- reading_gpu is in the gpu domain so we must double register
       disp1_reading <= gpu_reading;
       disp_reading  <= disp1_reading;
