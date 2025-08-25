@@ -48,7 +48,7 @@ architecture rtl of rw_fb is
   function get_fb_addr(pos : fb_vec_t; reading : boolean; current_buffer : boolean) return fb_addr_t is
     variable addr : fb_addr_t := (others => '0');
   begin
-    addr := resize(unsigned(pos.x), addr'length) + resize(unsigned(pos.y) * to_unsigned(WIDTH, 8), addr'length);
+    addr := resize(unsigned(pos.x), addr'length) + resize(unsigned(pos.y) * to_unsigned(WIDTH, addr'length), addr'length);
     if reading = current_buffer then
       addr := addr + to_unsigned(FB_PIXELS, addr'length);
     end if;

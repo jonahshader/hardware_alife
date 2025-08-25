@@ -6,6 +6,8 @@ build_verilated/
 hardware/ghdl_work/
 *.cf
 e~*.o
+# GHDL executables (test benches)
+hardware/vhdl/*_test_top
 
 # Generated Verilog from GHDL synthesis
 hardware/generated/

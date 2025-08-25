@@ -86,52 +86,57 @@ function(add_vhdl_module MODULE_NAME)
         set(ARG_TOP_ENTITY ${MODULE_NAME})
     endif()
     
-    # Convert relative paths to absolute paths
-    set(VHDL_ABS_FILES "")
-    foreach(FILE ${ARG_VHDL_FILES})
-        get_filename_component(ABS_FILE "${CMAKE_SOURCE_DIR}/hardware/vhdl/${FILE}" ABSOLUTE)
-        list(APPEND VHDL_ABS_FILES ${ABS_FILE})
-    endforeach()
-    
     # Output paths
     set(VERILOG_FILE ${CMAKE_BINARY_DIR}/hardware/generated/verilog/${MODULE_NAME}.v)
-    set(VERILATED_DIR ${CMAKE_BINARY_DIR}/hardware/verilated/obj_dir/${MODULE_NAME})
-    set(VERILATED_MAKEFILE ${VERILATED_DIR}/V${ARG_TOP_ENTITY}.mk)
-    set(VERILATED_LIB ${VERILATED_DIR}/V${ARG_TOP_ENTITY}__ALL.a)
-    
-    # Create directories
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/hardware/generated/verilog)
-    file(MAKE_DIRECTORY ${VERILATED_DIR})
-    
-    # GHDL work directory
     set(GHDL_WORKDIR ${CMAKE_BINARY_DIR}/hardware/ghdl_work/${MODULE_NAME})
+    
+    # Create directories during configuration
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/hardware/generated/verilog)
     file(MAKE_DIRECTORY ${GHDL_WORKDIR})
     
-    # Step 1a: GHDL analyze phase
-    add_custom_command(
-        OUTPUT ${GHDL_WORKDIR}/.analyzed
+    # Generate Verilog during configuration using execute_process
+    message(STATUS "GHDL: Synthesizing ${MODULE_NAME} (VHDL → Verilog)")
+    
+    # Step 1: GHDL analyze phase
+    execute_process(
         COMMAND ghdl -i --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} ${ARG_VHDL_FILES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/hardware/vhdl
+        RESULT_VARIABLE GHDL_ANALYZE_RESULT
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    
+    if(NOT GHDL_ANALYZE_RESULT EQUAL 0)
+        message(FATAL_ERROR "GHDL analyze failed for ${MODULE_NAME}")
+    endif()
+    
+    # Step 2: GHDL elaborate phase
+    execute_process(
         COMMAND ghdl -m --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} ${ARG_TOP_ENTITY}
-        COMMAND ${CMAKE_COMMAND} -E touch ${GHDL_WORKDIR}/.analyzed
-        DEPENDS ${VHDL_ABS_FILES}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/hardware/vhdl
-        COMMENT "Analyzing VHDL files for: ${MODULE_NAME}"
-        VERBATIM
+        RESULT_VARIABLE GHDL_ELABORATE_RESULT
+        OUTPUT_QUIET
+        ERROR_QUIET
     )
     
-    # Step 1b: GHDL synthesis to Verilog
-    add_custom_command(
-        OUTPUT ${VERILOG_FILE}
-        COMMAND ghdl synth --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} --out=verilog ${ARG_TOP_ENTITY} > ${VERILOG_FILE}
-        DEPENDS ${GHDL_WORKDIR}/.analyzed
+    if(NOT GHDL_ELABORATE_RESULT EQUAL 0)
+        message(FATAL_ERROR "GHDL elaborate failed for ${MODULE_NAME}")
+    endif()
+    
+    # Step 3: GHDL synthesis to Verilog
+    execute_process(
+        COMMAND ghdl synth --std=08 -fsynopsys --workdir=${GHDL_WORKDIR} --out=verilog ${ARG_TOP_ENTITY}
+        OUTPUT_FILE ${VERILOG_FILE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/hardware/vhdl
-        COMMENT "Synthesizing VHDL to Verilog: ${MODULE_NAME}"
-        VERBATIM
+        RESULT_VARIABLE GHDL_SYNTH_RESULT
+        ERROR_QUIET
     )
     
-    # The Verilator step is now handled by verilate() function
-    # Create a target for this module  
-    add_custom_target(${MODULE_NAME}_verilog DEPENDS ${VERILOG_FILE})
+    if(NOT GHDL_SYNTH_RESULT EQUAL 0)
+        message(FATAL_ERROR "GHDL synthesis failed for ${MODULE_NAME}")
+    endif()
+    
+    message(STATUS "GHDL: Generated ${VERILOG_FILE}")
     
 endfunction()
 
